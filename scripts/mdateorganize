@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # --------------------------------------------------------------------
@@ -28,6 +29,8 @@ from b3j0f.stap.organize import (
     mdateorganize, DEFAULT_IPATH, DEFAULT_OPATH, DEFAULT_PREFIX
 )
 
+from inspect import getargspec
+
 from argparse import ArgumentParser
 
 
@@ -35,11 +38,11 @@ def main():
     """Parse argvs and call the organizer function."""
 
     epilog = 'This tool brings a solution to people which get media files \
-from people, in organizing all files by the moment they have been modified (\
+from devices, in organizing all files by the moment they have been modified (\
 the moment when a picture/video has been taken). Technically, it organizes \
 all files from a directory by modification date. That means if you want to \
-modify your media files because you have problems of light or sounds, I \
-advice you might use this tool before.'
+modify your media files because you have problems of light or soun, you might \
+use this tool before.'
 
     parser = ArgumentParser(
         description='Organize files by modification date from a directory.',
@@ -48,7 +51,7 @@ advice you might use this tool before.'
 
     parser.add_argument(
         '-i', '--ipath', help='Input directory path.',
-        default=DEFAULT_IPATH, required=False, desc='ipath'
+        default=DEFAULT_IPATH, required=False, dest='ipath'
     )
 
     parser.add_argument(
@@ -68,14 +71,32 @@ advice you might use this tool before.'
 
     parser.add_argument(
         '-e', '--extensions', help='File extensions to organize.',
-        required=False, dest='extensions'
+        required=False, dest='extensions', nargs='+'
     )
 
     parser.add_argument(
-        '-f', '--followlinks', help='Follow links.', default=False,
-        action='store_true', dest='followlinks'
+        '-l', '--links', help='Follow links.', default=False,
+        action='store_true', dest='followlinks', required=False
+    )
+
+    parser.add_argument(
+        '-k', '--keepname', help='Keep source name in organized file names.',
+        default=False, action='store_true', dest='keepname', required=False
+    )
+
+    parser.add_argument(
+        '-f', '--force', help='Force overwrite if organized file exist.',
+        default=False, action='store_true', dest='overwrite', required=False
     )
 
     args = parser.parse_args()
 
-    mdateorganize(**args)
+    kwargs = {}
+
+    for arg in getargspec(mdateorganize).args:
+        kwargs[arg] = getattr(args, arg)
+
+    mdateorganize(**kwargs)
+
+if __name__ == '__main__':
+    main()

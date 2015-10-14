@@ -24,15 +24,17 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from os import walk, utime
-from os.path import getmtime, getctime, expanduser, join, abspath, splitext
+from os import walk, utime, makedirs
+from os.path import (
+    getmtime, getctime, expanduser, join, abspath, splitext, isdir, exists
+)
 
 from re import compile as re_compile
 
 from shutil import copyfile
 
 DEFAULT_IPATH = '.'  #: default input directory path.
-DEFAULT_OPATH = 'output'  #: default output directory path.
+DEFAULT_OPATH = 'organized'  #: default output directory path.
 DEFAULT_PREFIX = 'organized'  #: default organized file prefix.
 
 
@@ -41,7 +43,8 @@ __all__ = ['mdateorganize']
 
 def mdateorganize(
         ipath=DEFAULT_IPATH, opath=DEFAULT_OPATH, prefix=DEFAULT_PREFIX,
-        regex=None, extensions=None, followlinks=False, keepname=False
+        regex=None, extensions=None, followlinks=False, keepname=False,
+        overwrite=False
 ):
     """Organize files from a directory and sub-directories by modification date
     .
@@ -54,20 +57,31 @@ def mdateorganize(
     :param list extensions: file name extensions to organize.
     :param bool followlinks: follow links while pathing sub-directories.
     :param bool keepname: keep source file name in organized file.
+    :param bool overwrite: if True (False by default) overwrite existing files.
     """
 
     path = abspath(expanduser(ipath))  # get input path
 
     opath = abspath(expanduser(opath))  # get output path
 
-    compiled_regex = re_compile(regex)  # compile regex
+    try:
+        makedirs(opath)
+    except OSError:
+        if not isdir(opath):
+            raise
+
+    # compile regex
+    compiled_regex = None if regex is None else re_compile(regex)
 
     for dirname, _, files in walk(path, followlinks=followlinks):
+
+        if dirname == opath:
+            continue
 
         for name in files:
 
             filepath = join(dirname, name)  # get absolute file path
-            filename, extension = splitext(filepath)  # get file extension
+            _, extension = splitext(filepath)  # get file extension
 
             if extension:  # get extension
                 extension = extension[1:]
@@ -79,17 +93,20 @@ def mdateorganize(
                     ctime = getctime(filepath)
                     mtime = getmtime(filepath)  # get modified time
                     # new filename is prefix
-                    ofilename = '{0}-{1}'.format(prefix, mtime)
+                    ofilename = '{0}-{1}'.format(prefix, mtime).replace(
+                        '.', '_'
+                    )
 
                     if keepname:  # add filename
-                        ofilename = '{0}-{1}'.format(ofilename, filename)
+                        ofilename = '{0}-{1}'.format(ofilename, name)
 
-                    if extension:  # add extension
+                    elif extension:  # add extension
                         ofilename = '{0}.{1}'.format(ofilename, extension)
 
                     newfilepath = join(opath, ofilename)  # get output filepath
 
-                    copyfile(src=filepath, dst=newfilepath)  # copy file
+                    if overwrite or not exists(newfilepath):  # copy file
+                        copyfile(filepath, newfilepath)
 
-                    times = ctime, mtime  # get output times
-                    utime(path=newfilepath, times=times)  # set times
+                        times = ctime, mtime  # get output times
+                        utime(newfilepath, times)  # set times
