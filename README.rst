@@ -1,7 +1,7 @@
 Description
 ===========
 
-Project about saving time after a party :D
+Project about Saving Time After a Party :D
 
 .. image:: https://img.shields.io/pypi/l/b3j0f.stap.svg
    :target: https://pypi.python.org/pypi/b3j0f.stap/
@@ -64,9 +64,9 @@ Features
 
 This project provides tools to save time after party.
 
-- organize: organize files after getting reminders from several people.
+- organize: organize files after getting file reminders from several devices.
 
-Scripts are also available in the scripts directory.
+Scripts are also available in the directory ``scripts``.
 
 Perspectives
 ============
